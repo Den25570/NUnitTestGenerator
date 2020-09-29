@@ -65,7 +65,33 @@ namespace TestsGeneratorLib
             }
 
             return List(classMethods);
+        }
 
+        private static SyntaxList<MemberDeclarationSyntax> getTemplateFields(ClassDeclarationSyntax clsInfo, SemanticModel model)
+        {
+            //breakdown constructor / add mock objects
+            var constructor = (ConstructorDeclarationSyntax)clsInfo.ChildNodes().FirstOrDefault(n => n.Kind() == SyntaxKind.ConstructorDeclaration);
+            List<MemberDeclarationSyntax> classFields = new List<MemberDeclarationSyntax>();
+            if (constructor != null)
+            {
+                foreach (ParameterSyntax parameter in constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>())
+                {
+                    var typeSymbol = model.GetSymbolInfo(parameter.Type).Symbol as INamedTypeSymbol;
+                    var typeName = typeSymbol.ToString().Substring(typeSymbol.ToString().LastIndexOf(".") + 1);
+                    if (typeName.First() == 'I')
+                    {
+                        FieldDeclarationSyntax field = FieldDeclaration(
+                            VariableDeclaration(
+                                ParseTypeName($"Mock<{typeName}>"),
+                                SeparatedList(new[] { VariableDeclarator(Identifier(char.ToLower(typeName[1]) + typeName.Substring(2))) })
+                            ))
+                            .AddModifiers(Token(SyntaxKind.PrivateKeyword));
+                        classFields.Add(field);
+                    }
+                }
+            }
+
+            return List(classFields);
         }
 
         public static Task<List<GeneratedTestClass>> Generate(string code)
@@ -76,6 +102,11 @@ namespace TestsGeneratorLib
 
                 var tree = CSharpSyntaxTree.ParseText(code);
                 var syntaxRoot = tree.GetRoot();
+
+                var mscorlib = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
+                var compilation = CSharpCompilation.Create("MyCompilation",
+                    syntaxTrees: new[] { tree }, references: new[] { mscorlib });
+                var model = compilation.GetSemanticModel(tree);
 
                 var classDeclarations = syntaxRoot.DescendantNodes().OfType<ClassDeclarationSyntax>();
 
@@ -93,22 +124,29 @@ namespace TestsGeneratorLib
 
                     var template_usings = getTemplateUsing(clsNamespace);
                     var template_methods = getTemplateMethods(publicMethods);
-                    var template_classname = className + "Tests";
 
-                    var template_class = CompilationUnit()
-                        .WithUsings(template_usings)
-                        .WithMembers(SingletonList<MemberDeclarationSyntax>(template_namespace
-                            .WithMembers(SingletonList<MemberDeclarationSyntax>(ClassDeclaration(template_classname)
-                                .WithAttributeLists(
-                                    SingletonList(
-                                        AttributeList(
-                                            SingletonSeparatedList(
-                                                Attribute(
-                                                    IdentifierName("TestClass"))))))
-                                .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
-                                .WithMembers(template_methods)))));
+                    var template_fields = getTemplateFields(clsInfo, model);
 
-                    string generatedCode = template_class.NormalizeWhitespace().ToFullString();
+                    var template_members = List(template_methods.Concat(template_fields));
+
+                    var template_classname = className + "Tests";                
+
+                    //Class declaration
+                    var classTemplate =
+                      CompilationUnit()
+                         .WithUsings(template_usings)
+                         .WithMembers(SingletonList<MemberDeclarationSyntax>(template_namespace
+                             .WithMembers(SingletonList<MemberDeclarationSyntax>(ClassDeclaration(template_classname)
+                                 .WithAttributeLists(
+                                     SingletonList(
+                                         AttributeList(
+                                             SingletonSeparatedList(
+                                                 Attribute(
+                                                     IdentifierName("TestClass"))))))
+                                 .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
+                                 .WithMembers(template_members)))));
+
+                    string generatedCode = classTemplate.NormalizeWhitespace().ToFullString();
                     string generatedName = template_classname + ".cs";
 
                     generatedClasses.Add(new GeneratedTestClass(generatedName, generatedCode));
