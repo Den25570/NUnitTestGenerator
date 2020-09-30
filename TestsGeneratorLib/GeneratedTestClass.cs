@@ -11,7 +11,7 @@ namespace TestsGeneratorLib
 
         }
 
-        public void TestShit() { }
+        public void TestShit(int shit = 0) { }
 
         public string Name { get; }
         public string Code { get; }
