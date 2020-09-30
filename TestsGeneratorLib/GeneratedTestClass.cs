@@ -6,7 +6,7 @@ namespace TestsGeneratorLib
 {
     public class GeneratedTestClass
     {
-        public GeneratedTestClass(IDisposable disposable)
+        public GeneratedTestClass(int a, IDisposable disposable)
         {
 
         }
