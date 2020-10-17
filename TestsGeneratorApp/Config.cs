@@ -6,7 +6,7 @@ using System.Text;
 
 namespace TestsGeneratorApp
 {
-    class Config
+    public class Config
     {
         public readonly string InputPath;
         public readonly string OutputPath;

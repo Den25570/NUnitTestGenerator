@@ -104,7 +104,7 @@ namespace TestsGeneratorLib
         {
             List<MemberDeclarationSyntax> classMethods = new List<MemberDeclarationSyntax>();
 
-            string templateAttribute = "TestMethod";
+            string templateAttribute = "Test";
 
             //add setUp
             var constructor = (ConstructorDeclarationSyntax)clsInfo.ChildNodes().FirstOrDefault(n => n.Kind() == SyntaxKind.ConstructorDeclaration);

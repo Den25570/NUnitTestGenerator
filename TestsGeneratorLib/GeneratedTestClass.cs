@@ -6,13 +6,6 @@ namespace TestsGeneratorLib
 {
     public class GeneratedTestClass
     {
-        public GeneratedTestClass(int a, IDisposable disposable)
-        {
-
-        }
-
-        public void TestShit(int shit = 0) { }
-
         public string Name { get; }
         public string Code { get; }
 
