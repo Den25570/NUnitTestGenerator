@@ -110,8 +110,11 @@ namespace TestsGeneratorLib
             var constructor = (ConstructorDeclarationSyntax)clsInfo.ChildNodes().FirstOrDefault(n => n.Kind() == SyntaxKind.ConstructorDeclaration);
             if (constructor != null)
             {
-                var constructorMethod = AddSetUpMethod(clsInfo, model, constructor);
-                classMethods.Add(constructorMethod);
+                if (!clsInfo.Modifiers.Where(m => m.Kind().Equals(SyntaxKind.StaticKeyword)).Any())
+                {
+                    var constructorMethod = AddSetUpMethod(clsInfo, model, constructor);
+                    classMethods.Add(constructorMethod);
+                }
             }
 
             var publicMethods = clsInfo.DescendantNodes().OfType<MethodDeclarationSyntax>().Where(
