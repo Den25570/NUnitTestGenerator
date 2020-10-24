@@ -11,7 +11,7 @@ namespace NamespaceForTests.Test1
 
         }
 
-        public int TestShit(int shit = 0) { return 0; }
+        public int TestMethod(int a = 0) { return 0; }
 
         public string Name { get; }
         public string Code { get; }
@@ -25,9 +25,9 @@ namespace NamespaceForTests.Test2
         public string Name { get; }
         public string Code { get; }
 
-        public void TestShit2(int shit = 0) { }
+        public void TestMethod2(int a = 0) { }
 
-        public void TestShit1(int shit = 0) { }
+        public void TestMethod1(int a = 0) { }
 
         public ClassForTest2(string name, string code)
         {

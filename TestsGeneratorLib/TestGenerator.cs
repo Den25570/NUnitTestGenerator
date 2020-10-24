@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using System.Reflection;
 using Microsoft.CSharp;
 using System.CodeDom;
-
+using System.Text.RegularExpressions;
 
 namespace TestsGeneratorLib
 {
@@ -129,6 +129,11 @@ namespace TestsGeneratorLib
             return List(classMethods);
         }
 
+        private static string RemoveAllNamespacePrefixes(string variable)
+        {
+            return Regex.Replace(variable, @"\w+\.", "");
+        }
+
         private static MethodDeclarationSyntax AddSetUpMethod(
             ClassDeclarationSyntax clsInfo,
             SemanticModel model,
@@ -190,7 +195,10 @@ namespace TestsGeneratorLib
 
             //call method to test
             var returnTypeSymbol = model.GetSymbolInfo(methodToAnalyze.ReturnType).Symbol as INamedTypeSymbol;
-            var returnTypeName = returnTypeSymbol.ToString().Substring(returnTypeSymbol.ToString().LastIndexOf(".") + 1);
+
+            
+            var returnTypeName = RemoveAllNamespacePrefixes(returnTypeSymbol.ToString());//.Substring(returnTypeSymbol.ToString().LastIndexOf(".") + 1);
+
             //act
             var invocationExpression = InvocationExpression(
                 MemberAccessExpression(
@@ -264,7 +272,8 @@ namespace TestsGeneratorLib
 
         private static void AddVariable(List<StatementSyntax> statements, List<ArgumentSyntax> methodParams, INamedTypeSymbol typeSymbol, string variableName = null)
         {
-            string typeName = typeSymbol.ToString().Substring(typeSymbol.ToString().LastIndexOf(".") + 1);
+
+            string typeName = RemoveAllNamespacePrefixes(typeSymbol.ToString()); //typeSymbol.ToString().Substring(typeSymbol.ToString().LastIndexOf(".") + 1);
             
             if (typeName.First() == 'I')
             {
@@ -328,7 +337,7 @@ namespace TestsGeneratorLib
                 foreach (ParameterSyntax parameter in parameters)
                 {
                     var typeSymbol = model.GetSymbolInfo(parameter.Type).Symbol as INamedTypeSymbol;
-                    var typeName = typeSymbol.ToString().Substring(typeSymbol.ToString().LastIndexOf(".") + 1);
+                    var typeName = RemoveAllNamespacePrefixes(typeSymbol.ToString()); //typeSymbol.ToString().Substring(typeSymbol.ToString().LastIndexOf(".") + 1);
                     if (typeName.First() == 'I')
                     {
                         lastAddedField = field = GetMockObject(typeName);
